@@ -1,23 +1,23 @@
 <h1 align="center">nestjs-tenancy</h1>
 
 <p align="center">
-  A simple easy to use multitenancy module for NestJs and Mongoose
+  A simple easy to use multitenancy module for NestJs and Sequelize
 </p>
 
-<p align="center">
+<!-- <p align="center">
 <a href="https://www.npmjs.com/~sandeepsuvit" target="_blank"><img src="https://img.shields.io/npm/v/@needle-innovision/nestjs-tenancy.svg" alt="NPM Version" /></a>
 <a href="https://www.npmjs.com/~sandeepsuvit" target="_blank"><img src="https://img.shields.io/npm/l/@needle-innovision/nestjs-tenancy.svg" alt="Package License" /></a>
 <a href="https://www.npmjs.com/~sandeepsuvit" target="_blank"><img src="https://img.shields.io/npm/dm/@needle-innovision/nestjs-tenancy.svg" alt="NPM Downloads" /></a>
-</p>
+</p> -->
 
 ## Description
 
-[Mongoose](http://mongoosejs.com/) multitenancy module for [Nest](https://github.com/nestjs/nest).
+[Sequelize](https://sequelize.org/) multitenancy module for [Nest](https://github.com/nestjs/nest).
 
 ## Installation
 
 ```bash
-$ npm i --save @needle-innovision/nestjs-tenancy
+$ npm i --save nestjs-tenancy
 ```
 
 ## Basic usage
@@ -34,7 +34,7 @@ import { CatsModule } from "./cat.module.ts";
     TenancyModule.forRoot({
         tenantIdentifier: 'X-TENANT-ID',
         options: () => {},
-        uri: (tenantId: string) => `mongodb://localhost/test-tenant-${tenantId}`,
+        uri: (tenantId: string) => `mysql://localhost/${tenantId}`,
     }),
     CatsModule,
   ],

@@ -12,6 +12,7 @@
     "outDir": "./dist",
     "rootDir": "./lib",
     "strict": true,
+    "skipLibCheck": true,
     "strictPropertyInitialization": false
   },
   "include": [
