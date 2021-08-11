@@ -2,7 +2,7 @@ import { BadRequestException, DynamicModule, Global, Module, OnApplicationShutdo
 import { Type } from '@nestjs/common/interfaces';
 import { HttpAdapterHost, ModuleRef, REQUEST } from '@nestjs/core';
 import { Request } from 'express';
-import { Sequelize } from 'sequelize-typescript';
+import { Sequelize, ModelCtor } from 'sequelize-typescript';
 import {
   TenancyModuleAsyncOptions,
   TenancyModuleOptions,
@@ -323,7 +323,10 @@ export class TenancyCoreModule implements OnApplicationShutdown {
     // Otherwise create a new connection
 
     const connection = new Sequelize(moduleOptions.uri(tenantId), {
-      models: models.keys().map((name: string) => models.get(name)),
+      models: Array.from(
+        models as Map<string, ModelCtor>,
+        ([_, value]) => value,
+      ),
     });
 
     // Add the new connection to the map
