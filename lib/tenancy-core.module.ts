@@ -2,7 +2,7 @@ import { BadRequestException, DynamicModule, Global, Module, OnApplicationShutdo
 import { Type } from '@nestjs/common/interfaces';
 import { HttpAdapterHost, ModuleRef, REQUEST } from '@nestjs/core';
 import { Request } from 'express';
-import { ModelCtor, Sequelize } from 'sequelize-typescript';
+import { Sequelize } from 'sequelize-typescript';
 import {
   TenancyModuleAsyncOptions,
   TenancyModuleOptions,
@@ -57,7 +57,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
         tenantId: string,
         moduleOptions: TenancyModuleOptions,
         connMap: ConnectionMap,
-        models: Array<ModelCtor>,
+        models: ModelDefinitionMap,
       ): Promise<Sequelize> => {
         return await this.getConnection(
           tenantId,
@@ -118,7 +118,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
         tenantId: string,
         moduleOptions: TenancyModuleOptions,
         connMap: ConnectionMap,
-        models: Array<ModelCtor>,
+        models: ModelDefinitionMap,
       ): Promise<Sequelize> => {
         return await this.getConnection(
           tenantId,
@@ -305,7 +305,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
     tenantId: string,
     moduleOptions: TenancyModuleOptions,
     connMap: ConnectionMap,
-    models: Array<ModelCtor>,
+    models: ModelDefinitionMap,
   ): Promise<Sequelize> {
     // Check if validator is set, if so call the `validate` method on it
     if (moduleOptions.validator) {
@@ -323,7 +323,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
     // Otherwise create a new connection
 
     const connection = new Sequelize(moduleOptions.uri(tenantId), {
-      models,
+      models: models.keys().map((name: string) => models.get(name)),
     });
 
     // Add the new connection to the map

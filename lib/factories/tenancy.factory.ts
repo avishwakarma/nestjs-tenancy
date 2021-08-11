@@ -23,7 +23,7 @@ export const createTeanancyProviders = (models: ModelCtor[]): Provider[] => {
           modelDefinitionMap.set(model.name, model);
 
           connectionMap.forEach((connection: Sequelize) => {
-            connection.modelManager.addModel(model);
+            connection.addModels([model]);
           });
         }
       },
@@ -34,7 +34,7 @@ export const createTeanancyProviders = (models: ModelCtor[]): Provider[] => {
     providers.push({
       provide: getTenantModelToken(model.name),
       useFactory(tenantConnection: Sequelize) {
-        return tenantConnection.models[model.name];
+        return tenantConnection.model(model.name);
       },
       inject: [TENANT_CONNECTION],
     });
