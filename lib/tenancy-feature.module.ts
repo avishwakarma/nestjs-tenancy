@@ -1,19 +1,17 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { createTeanancyProviders } from './factories';
-import { ModelDefinition } from './interfaces';
+import { ModelCtor } from 'sequelize-typescript';
 
 @Global()
 @Module({})
 export class TenancyFeatureModule {
+  static register(models: ModelCtor[]): DynamicModule {
+    const providers = createTeanancyProviders(models);
 
-    static register(models: ModelDefinition[]): DynamicModule {
-        const providers = createTeanancyProviders(models);
-
-        return {
-            module: TenancyFeatureModule,
-            providers,
-            exports: providers,
-        };
-    }
-
+    return {
+      module: TenancyFeatureModule,
+      providers,
+      exports: providers,
+    };
+  }
 }

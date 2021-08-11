@@ -1,48 +1,45 @@
 import { Provider } from '@nestjs/common';
-import { Connection } from 'mongoose';
-import { ModelDefinition } from '../interfaces';
-import { CONNECTION_MAP, MODEL_DEFINITION_MAP, TENANT_CONNECTION } from '../tenancy.constants';
+import { ModelCtor, Sequelize } from 'sequelize-typescript';
+import {
+  CONNECTION_MAP,
+  MODEL_DEFINITION_MAP,
+  TENANT_CONNECTION,
+} from '../tenancy.constants';
 import { ConnectionMap, ModelDefinitionMap } from '../types';
 import { getTenantModelDefinitionToken, getTenantModelToken } from '../utils';
 
-export const createTeanancyProviders = (definitions: ModelDefinition[]): Provider[] => {
-    const providers: Provider[] = [];
+export const createTeanancyProviders = (models: ModelCtor[]): Provider[] => {
+  const providers: Provider[] = [];
 
-    for (const definition of definitions) {
-        // Extract the definition data
-        const { name, schema, collection } = definition;
+  for (const model of models) {
+    providers.push({
+      provide: getTenantModelDefinitionToken(model.name),
+      useFactory: (
+        modelDefinitionMap: ModelDefinitionMap,
+        connectionMap: ConnectionMap,
+      ) => {
+        const exists = modelDefinitionMap.has(model.name);
+        if (!exists) {
+          modelDefinitionMap.set(model.name, model);
 
-        providers.push({
-            provide: getTenantModelDefinitionToken(name),
-            useFactory: (
-                modelDefinitionMap: ModelDefinitionMap,
-                connectionMap: ConnectionMap,
-            ) => {
-                const exists = modelDefinitionMap.has(name);
-                if (!exists) {
-                    modelDefinitionMap.set(name, { ...definition });
+          connectionMap.forEach((connection: Sequelize) => {
+            connection.modelManager.addModel(model);
+          });
+        }
+      },
+      inject: [MODEL_DEFINITION_MAP, CONNECTION_MAP],
+    });
 
-                    connectionMap.forEach((connection: Connection) => {
-                        connection.model(name, schema, collection);
-                    });
-                }
-            },
-            inject: [
-                MODEL_DEFINITION_MAP,
-                CONNECTION_MAP,
-            ],
-        });
+    // Creating Models with connections attached
+    providers.push({
+      provide: getTenantModelToken(model.name),
+      useFactory(tenantConnection: Sequelize) {
+        return tenantConnection.models[model.name];
+      },
+      inject: [TENANT_CONNECTION],
+    });
+  }
 
-        // Creating Models with connections attached
-        providers.push({
-            provide: getTenantModelToken(name),
-            useFactory(tenantConnection: Connection) {
-                return tenantConnection.model(name, schema, collection);
-            },
-            inject: [TENANT_CONNECTION],
-        });
-    }
-
-    // Return the list of providers mapping
-    return providers;
+  // Return the list of providers mapping
+  return providers;
 };
