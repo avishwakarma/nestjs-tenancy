@@ -193,6 +193,10 @@ export class TenancyCoreModule implements OnApplicationShutdown {
       throw new BadRequestException(`Tenant options are mandatory`);
     }
 
+    if(moduleOptions.tenantId) {
+      return moduleOptions.tenantId;
+    }
+
     // Extract the tenant idetifier
     const {
       tenantIdentifier = null,
@@ -321,13 +325,27 @@ export class TenancyCoreModule implements OnApplicationShutdown {
     }
 
     // Otherwise create a new connection
-
-    const connection = new Sequelize(moduleOptions.uri(tenantId), {
+    
+    const commonOptions = {
+      ssl: moduleOptions.ssl || false,
+      timezone: moduleOptions.timezone || '+00:00',
       models: Array.from(
         models as Map<string, ModelCtor>,
         ([_, value]) => value,
       ),
-    });
+    };
+
+    const connection = moduleOptions.uri && typeof moduleOptions.uri === 'function'
+      ? new Sequelize(moduleOptions.uri(tenantId), commonOptions)
+      : new Sequelize({
+          dialect: moduleOptions.dialect || 'mysql',
+          host: moduleOptions.host || '127.0.0.1',
+          port: moduleOptions.port || 3306,
+          username: moduleOptions.username || 'root',
+          password: moduleOptions.password || '',
+          database: moduleOptions.database || '',
+          ...commonOptions,
+        });
 
     // Add the new connection to the map
     connMap.set(tenantId, connection);

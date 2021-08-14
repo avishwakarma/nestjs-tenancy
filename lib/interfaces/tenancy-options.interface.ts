@@ -1,4 +1,5 @@
 import { ModuleMetadata, Type } from '@nestjs/common/interfaces';
+import { Dialect } from 'sequelize';
 
 /**
  * Options for synchronous setup
@@ -7,43 +8,101 @@ import { ModuleMetadata, Type } from '@nestjs/common/interfaces';
  * @interface TenancyModuleOptions
  */
 export interface TenancyModuleOptions extends Record<string, any> {
-    /**
-     * If `true`, tenant id will be extracted from the subdomain
-     */
-    isTenantFromSubdomain?: boolean;
-    
-    /**
-     * Tenant id will be extracted using the keyword from the request header
-     */
-    tenantIdentifier?: string;
-    
-    /**
-     * URI for the tenant database
-     */
-    uri: (uri: string) => string;
+  /**
+   * Provide tenantId directly
+   */
+  tenantId?: string;
 
-    /**
-     * Used for applying custom validations
-     */
-    validator?: (tenantId: string) => TenancyValidator;
-    
-    /**
-     * Options for the database
-     */
-    options?: any;
+  /**
+   * If `true`, tenant id will be extracted from the subdomain
+   */
+  isTenantFromSubdomain?: boolean;
 
-    /**
-     * Whitelist following subdomains
-     */
-    whitelist?: any;
+  /**
+   * Tenant id will be extracted using the keyword from the request header
+   */
+  tenantIdentifier?: string;
 
-    /**
-     * Option to create the collections that are mapped to the tenant module
-     * automatically while requesting for the tenant connection for the 
-     * first time. This option is useful in case on mongo transactions, where
-     * transactions doens't create a collection if it does't exist already.
-     */
-    forceCreateCollections?: boolean;
+  /**
+   * The dialect of the database you are connecting to. One of mysql, postgres, sqlite, mariadb and mssql.
+   *
+   * @default 'mysql'
+   */
+  dialect?: Dialect;
+
+  /**
+   * The name of the database
+   */
+  database?: string;
+
+  /**
+   * The username which is used to authenticate against the database.
+   */
+  username?: string;
+
+  /**
+   * The password which is used to authenticate against the database.
+   */
+  password?: string;
+
+  /**
+   * The host of the relational database.
+   *
+   * @default 'localhost'
+   */
+  host?: string;
+
+  /**
+   * The port of the relational database.
+   */
+  port?: number;
+
+  /**
+   * A flag that defines if is used SSL.
+   */
+  ssl?: boolean;
+
+  /**
+   * The protocol of the relational database.
+   *
+   * @default 'tcp'
+   */
+  protocol?: string;
+
+  /**
+   * The timezone used when converting a date from the database into a JavaScript date. The timezone is also
+   * used to SET TIMEZONE when connecting to the server, to ensure that the result of NOW, CURRENT_TIMESTAMP
+   * and other time related functions have in the right timezone. For best cross platform performance use the
+   * format
+   * +/-HH:MM. Will also accept string versions of timezones used by moment.js (e.g. 'America/Los_Angeles');
+   * this is useful to capture daylight savings time changes.
+   *
+   * @default '+00:00'
+   */
+  timezone?: string;
+
+  /**
+   * URI for the tenant database
+   */
+  uri?: (tenant: string) => string;
+
+  /**
+   * Used for applying custom validations
+   */
+  validator?: (tenantId: string) => TenancyValidator;
+
+  /**
+   * Whitelist following subdomains
+   */
+  whitelist?: any;
+
+  /**
+   * Option to create the collections that are mapped to the tenant module
+   * automatically while requesting for the tenant connection for the
+   * first time. This option is useful in case on mongo transactions, where
+   * transactions doens't create a collection if it does't exist already.
+   */
+  forceCreateCollections?: boolean;
 }
 
 /**

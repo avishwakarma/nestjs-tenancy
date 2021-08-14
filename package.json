@@ -1,6 +1,6 @@
 {
     "name": "nestjs-tenancy",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "Nestjs module for multitenancy support in Sequilize",
     "author": "Ashok V <akvlko@gmail.com>",
     "repository": "https://github.com/avishwakarma/nestjs-tenancy",

@@ -1,18 +1,14 @@
-<h1 align="center">nestjs-tenancy</h1>
+# nestjs-tenancy
 
-<p align="center">
-  A simple easy to use multitenancy module for NestJs and Sequelize
-</p>
+A simple easy to use multitenancy module for NestJs and Sequelize
 
-<!-- <p align="center">
-<a href="https://www.npmjs.com/~sandeepsuvit" target="_blank"><img src="https://img.shields.io/npm/v/@needle-innovision/nestjs-tenancy.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~sandeepsuvit" target="_blank"><img src="https://img.shields.io/npm/l/@needle-innovision/nestjs-tenancy.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~sandeepsuvit" target="_blank"><img src="https://img.shields.io/npm/dm/@needle-innovision/nestjs-tenancy.svg" alt="NPM Downloads" /></a>
-</p> -->
+<a href="https://www.npmjs.com/package/nestjs-tenancy" target="_blank"><img src="https://img.shields.io/npm/v/nestjs-tenancy.svg" alt="NPM Version" /></a>
+<a href="https://www.npmjs.com/package/nestjs-tenancy" target="_blank"><img src="https://img.shields.io/npm/l/nestjs-tenancy.svg" alt="Package License" /></a>
+<a href="https://www.npmjs.com/package/nestjs-tenancy" target="_blank"><img src="https://img.shields.io/npm/dm/nestjs-tenancy.svg" alt="NPM Downloads" /></a>
 
 ## Description
 
-[Sequelize](https://sequelize.org/) multitenancy module for [Nest](https://github.com/nestjs/nest).
+Multitenancy Module for [Nest](https://github.com/nestjs/nest) using [Sequelize](https://sequelize.org/) or [Sequelize TypeScript](https://www.npmjs.com/package/sequelize-typescript).
 
 ## Installation
 
@@ -26,91 +22,93 @@ $ npm i --save nestjs-tenancy
 
 ```typescript
 import { Module } from "@nestjs/common";
-import { TenancyModule } from "@needle-innovision/nestjs-tenancy";
-import { CatsModule } from "./cat.module.ts";
+import { REQUEST } from "@nestjs/core";
+import { Request } from "express";
+import { TenancyModule } from "nestjs-tenancy";
+import { UserModule } from "./user.module.ts";
 
 @Module({
   imports: [
     TenancyModule.forRoot({
-        tenantIdentifier: 'X-TENANT-ID',
-        options: () => {},
-        uri: (tenantId: string) => `mysql://localhost/${tenantId}`,
+      tenantIdentifier: 'X-TENANT',
+      uri: (tenant: string) => 
+        `postgresql://postgresql:@127.0.0.1:5432/${tenant}?schema=public`,
     }),
-    CatsModule,
+    UserModule,
   ],
 })
 export class AppModule {}
 ```
 
-Create class that describes your schema
+Create your Sequelize model
 
-**cat.model.ts**
+**user.model.ts**
 
 ```typescript
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { 
+  Table, 
+  Model, 
+  Column, 
+  PrimaryKey 
+} from 'sequelize-typescript';
 
-@Schema()
-export class Cat extends Document {
-    @Prop()
+@Table()
+export class User extends Model {
+    @Column()
     name: string;
 
-    @Prop()
-    age: number;
+    @Column()
+    email: number;
 
-    @Prop()
-    breed: string;
+    @Column()
+    password: string;
 }
-
-export const CatSchema = SchemaFactory.createForClass(Cat);
 ```
 
-Inject Cat for `CatsModule`
+Inject User for `UserModule`
 
-**cat.module.ts**
+**user.module.ts**
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { TenancyModule } from '@needle-innovision/nestjs-tenancy';
-import { CatsController } from './cats.controller';
-import { CatsService } from './cats.service';
-import { Cat, CatSchema } from './schemas/cat.schema';
+import { TenancyModule } from 'nestjs-tenancy';
+import { UserController } from './user.controller';
+import { UserService } from './user.service';
+import { User } from './user.model';
 
 @Module({
-    imports: [
-        TenancyModule.forFeature([{ name: Cat.name, schema: CatSchema }])
-    ],
-    controllers: [CatsController],
-    providers: [CatsService],
+  imports: [
+    TenancyModule.forFeature([User])
+  ],
+  controllers: [UserController],
+  providers: [UserService],
 })
-export class CatsModule { }
+export class UserModule { }
 ```
 
-Get the cat model in a service
+Get the User model in a service
 
-**cats.service.ts**
+**user.service.ts**
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { InjectTenancyModel } from '@needle-innovision/nestjs-tenancy';
-import { Model } from 'mongoose';
-import { CreateCatDto } from './dto/create-cat.dto';
-import { Cat } from './schemas/cat.schema';
+import { InjectTenancyModel } from 'nestjs-tenancy';
+import { User } from './user.model';
 
 @Injectable()
-export class CatsService {
-    constructor(
-        @InjectTenancyModel(Cat.name) private readonly catModel: Model<Cat>
-    ) { }
+export class UserService {
+  constructor(
+    @InjectTenancyModel(User.name) 
+    private readonly user: typeof User
+  ) { }
 
-    async create(createCatDto: CreateCatDto): Promise<Cat> {
-        const createdCat = new this.catModel(createCatDto);
-        return createdCat.save();
-    }
+  async create(user: Partial<User>): Promise<User> {
+    return this.user.create(user);
+  }
 
-    async findAll(): Promise<Cat[]> {
-        return this.catModel.find().exec();
-    }
+  async findAll(): Promise<User[]> {
+    return this.user.findAll<User>();
+  }
 }
 ```
 
@@ -121,23 +119,22 @@ Finally, use the service in a controller!
 ```typescript
 
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { CatsService } from './cats.service';
-import { CreateCatDto } from './dto/create-cat.dto';
-import { Cat } from './schemas/cat.schema';
+import { UserService } from './user.service';
+import { User } from './user.model';
 
-@Controller('cats')
+@Controller('user')
 export class CatsController {
-    constructor(private readonly catsService: CatsService) { }
+  constructor(private readonly user: UserService) { }
 
-    @Post()
-    async create(@Body() createCatDto: CreateCatDto) {
-        return this.catsService.create(createCatDto);
-    }
+  @Post()
+  async create(@Body() user: Partial<User>) {
+    return this.user.create(user);
+  }
 
-    @Get()
-    async findAll(): Promise<Cat[]> {
-        return this.catsService.findAll();
-    }
+  @Get()
+  async findAll(): Promise<User[]> {
+    return this.user.findAll();
+  }
 }
 ```
 
@@ -148,16 +145,17 @@ this by implementing the `TenancyValidator` interface and writing your own valid
 the `validate` method. The library invokes this method internally.
 
 ### Note
-Here we assume that `X-TENANT-ID` is passed in the request header so that its available for the validator.
+Here we assume that `X-TENANT` is passed in the request header so that its available for the validator.
 
 **custom-tenant.validator.ts**
 
 ```typescript
-import { TenancyValidator } from '@app/tenancy';
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { ITenantModel } from '../../core/models/tenant.model';
+import { InjectModel } from '@nestjs/sequelize';
+
+import { TenancyValidator } from "nestjs-tenancy";
+
+import { Tenant } from './tenant.model';
 
 @Injectable()
 export class CustomTenantValidator implements TenancyValidator {
@@ -165,7 +163,7 @@ export class CustomTenantValidator implements TenancyValidator {
 
     // This`Tenant` model definition schema is mapped to the common database and
     // not into the tenant database.
-    constructor(@InjectModel('Tenant') private tenantModel: Model<ITenantModel>) { }
+    constructor(@InjectModel(Tenant) private tenant: typeof Tenant) { }
 
     /**
      * Method to set the tenant id
@@ -189,7 +187,7 @@ export class CustomTenantValidator implements TenancyValidator {
      * @memberof CustomTenantValidator
      */
     async validate(): Promise<void> {
-        const exist = await this.tenantModel.exists({ name: this._tenantId });
+        const exist = await this.tenant.exists({ name: this._tenantId });
         if (!exist) {
             throw new NotFoundException(`Tenant not found`);
         }
@@ -203,16 +201,17 @@ Export the validator from your tenant module
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { TenantSchema } from '../core/schemas/tenant.schema';
+import { SequelizeModule } from '@nestjs/sequelize';
+
+import { Tenant } from './tenant.model';
+import { CustomTenantValidator } from './custom-tenant.validator';
 import { TenantController } from './tenant.controller';
 import { TenantService } from './tenant.service';
-import { CustomTenantValidator } from './validators/custom-tenant.validator';
 
 @Module({
   imports: [
     // Here the connection represents the common database
-    MongooseModule.forFeature([{ name: 'Tenant', schema: TenantSchema }])
+    SequelizeModule.forFeature([Tenant])
   ],
   controllers: [TenantController],
   providers: [
@@ -228,59 +227,33 @@ import { CustomTenantValidator } from './validators/custom-tenant.validator';
 export class TenantModule {}
 ```
 
-Export the database configuration
-
-**config.ts**
-
-```
-export default () => ({
-    database: {
-        uri: process.env.MONGO_URI
-    }
-});
-```
-
 Finally you will also need to modify the module configuration.
 
 **app.module.ts**
 
 ```typescript
 import { Module } from "@nestjs/common";
-import { TenancyModule } from "@needle-innovision/nestjs-tenancy";
-import { CatsModule } from "./cat.module.ts";
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import configuration from './config';
+import { REQUEST } from "@nestjs/core";
+import { Request } from "express";
+import { TenancyModule } from "nestjs-tenancy";
+import { UserModule } from "./user.module";
 import { TenantModule } from './tenant/tenant.module';
-import { CustomTenantValidator } from './tenant/validators/custom-tenant.validator';
 
 @Module({
   imports: [
-    // Load the default configuration file
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: configuration,
-    }),
-    // Mongoose default connection
-    MongooseModule.forRootAsync({
-      useFactory: async (cfs: ConfigService) => cfs.get('database'),
-      inject: [ConfigService],
-    }),
-    // Tenant async configuration
     TenancyModule.forRootAsync({
-      imports: [TenantModule],
-      useFactory: async (cfs: ConfigService, tVal: CustomTenantValidator) => {
+      imports: [TenantModule]
+      useFactory: async (validator: CustomTenantValidator) => {
         return {
-          // Base tenant configurations
-          tenantIdentifier: 'X-TENANT-ID',
-          options: () => {},
-          uri: (tenantId: string) => `mongodb://localhost/test-tenant-${tenantId}`,
-          // Custom validator to check if the tenant exist in common database
-          validator: (tenantId: string) => tVal.setTenantId(tenantId),
-        }
+          tenantIdentifier: 'X-TENANT',
+          uri: (tenantId: string) => 
+            `postgresql://postgresql:@127.0.0.1:5432/${tenantId}?schema=public`,
+          validator: (tenantId: string) => validator.setTenantId(tenantId)
+        };
       },
-      inject: [ConfigService, CustomTenantValidator],
+      inject: [CustomTenantValidator]
     }),
-    CatsModule,
+    UserModule,
   ],
 })
 export class AppModule {}
@@ -295,36 +268,28 @@ For enabling this you need to modify your configuration like below.
 
 ```typescript
 import { Module } from "@nestjs/common";
-import { TenancyModule } from "@needle-innovision/nestjs-tenancy";
-import { CatsModule } from "./cat.module.ts";
+import { REQUEST } from "@nestjs/core";
+import { Request } from "express";
+import { TenancyModule } from "nestjs-tenancy";
+import { UserModule } from "./user.module.ts";
 
 @Module({
   imports: [
     TenancyModule.forRoot({
-        // This will allow the library to extract the subdomain as tenant id
-        isTenantFromSubdomain: true,
-        options: () => {},
-        uri: (tenantId: string) => `mongodb://localhost/test-tenant-${tenantId}`,
+      isTenantFromSubdomain: true,
+      uri: (tenant: string) => 
+        `postgresql://postgresql:@127.0.0.1:5432/${tenant}?schema=public`,
     }),
-    CatsModule,
+    UserModule,
   ],
 })
 export class AppModule {}
 ```
 
-## Support for Mongo Transactions
-
-There are cases when using Mongo Transactions we wouldn't get the flexibility of
-mongoose to automatically initialize the empty collection for us. In that case
-we can make use of the property in `TenancyModuleOptions` which is `forceCreateCollections: true`
-(set to false by default) to automatically initialize all collections that are mapped to `TenancyModule`.
-
 ## Requirements
 
-1.  @nest/mongoose +6.4.0
-2.  @nestjs/common +6.10.1
-3.  @nestjs/core +6.10.1
-4.  mongoose (with typings `@types/mongoose`) +5.7.12
+1.  sequelize ^6.6.5 
+2.  sequelize-typescript ^2.1.0
 
 ## Test
 
@@ -333,10 +298,10 @@ we can make use of the property in `TenancyModuleOptions` which is `forceCreateC
 $ npm run test:e2e
 ```
 
-## Stay in touch
-
-- Author - [Sandeep K](https://github.com/sandeepsuvit)
-
 ## License
 
   Nest is [MIT licensed](LICENSE).
+
+## Credits
+
+This is forked from [@needle-innovision/nestjs-tenancy](https://github.com/needle-innovision/nestjs-tenancy) which is built for [Mongoose](http://mongoosejs.com/) do checkout if you need Multi Tenancy for your Mongoose based NestJs App.
