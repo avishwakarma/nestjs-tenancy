@@ -22,9 +22,9 @@ $ npm i --save nestjs-tenancy
 
 ```typescript
 import { Module } from "@nestjs/common";
-import { REQUEST } from "@nestjs/core";
-import { Request } from "express";
+
 import { TenancyModule } from "nestjs-tenancy";
+
 import { UserModule } from "./user.module.ts";
 
 @Module({
@@ -233,9 +233,9 @@ Finally you will also need to modify the module configuration.
 
 ```typescript
 import { Module } from "@nestjs/common";
-import { REQUEST } from "@nestjs/core";
-import { Request } from "express";
+
 import { TenancyModule } from "nestjs-tenancy";
+
 import { UserModule } from "./user.module";
 import { TenantModule } from './tenant/tenant.module';
 
@@ -268,9 +268,9 @@ For enabling this you need to modify your configuration like below.
 
 ```typescript
 import { Module } from "@nestjs/common";
-import { REQUEST } from "@nestjs/core";
-import { Request } from "express";
+
 import { TenancyModule } from "nestjs-tenancy";
+
 import { UserModule } from "./user.module.ts";
 
 @Module({
