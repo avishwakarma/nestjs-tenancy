@@ -114,7 +114,7 @@ export class UserService {
 
 Finally, use the service in a controller!
 
-**cats.controller.ts**
+**user.controller.ts**
 
 ```typescript
 
@@ -123,7 +123,7 @@ import { UserService } from './user.service';
 import { User } from './user.model';
 
 @Controller('user')
-export class CatsController {
+export class UserController {
   constructor(private readonly user: UserService) { }
 
   @Post()
