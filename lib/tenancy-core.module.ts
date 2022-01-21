@@ -333,7 +333,7 @@ export class TenancyCoreModule implements OnApplicationShutdown {
         models as Map<string, ModelCtor>,
         ([_, value]) => value,
       ),
-      logging: moduleOptions.logging,
+      logging: moduleOptions.logging || console.log,
     };
 
     const connection = moduleOptions.uri && typeof moduleOptions.uri === 'function'
