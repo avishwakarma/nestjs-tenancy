@@ -103,6 +103,11 @@ export interface TenancyModuleOptions extends Record<string, any> {
    * transactions doens't create a collection if it does't exist already.
    */
   forceCreateCollections?: boolean;
+
+  /**
+   * Logging for Sequelize
+   */
+  logging?: boolean | ((sql: string, timing?: number) => void);
 }
 
 /**
